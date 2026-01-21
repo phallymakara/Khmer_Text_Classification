@@ -1,0 +1,22 @@
+# Dependency directories (React)
+node_modules/
+frontend/node_modules/
+
+# Python Virtual Environments
+venv/
+.venv/
+env/
+PYTHON_ENV/
+
+# Build and Distribution files
+build/
+dist/
+__pycache__/
+*.pyc
+
+# Local Environment Secrets (Always ignore these!)
+.env
+.env.local
+
+# ML Models (If you want to ignore them due to size)
+# ml/*.joblib
