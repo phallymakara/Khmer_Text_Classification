@@ -9,6 +9,13 @@ env/
 **/venv/
 **/env/
 
+# ml model
+*.joblib
+*.pkl
+*.h5
+*.pth
+*.onnx
+
 # Python cache (Crucial: yours didn't catch the subfolders earlier)
 **/__pycache__/
 *.pyc
