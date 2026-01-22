@@ -96,3 +96,30 @@ docker-compose up --build
 ```bash
 API Docs (Swagger): http://localhost:8000/docs
 ```
+
+## Model Management
+
+To keep the repository lightweight and comply with GitHub file size limitations, the trained machine learning model is not included in this repository.
+
+---
+
+### How to Get the Model
+
+To obtain the trained model, please contact the author via Telegram:
+
+https://t.me/phallymakara
+
+### Model Setup
+
+To run the prediction engine, follow these steps:
+
+1. Obtain the model file named:
+   `best_model_compressed.joblib`
+
+2. Place the model file in the following directory:
+   `backend/ml/`
+
+3. Ensure the file name matches exactly:
+   `best_model_compressed.joblib`
+
+Once the model file is placed in the correct directory, the prediction engine will function correctly.
