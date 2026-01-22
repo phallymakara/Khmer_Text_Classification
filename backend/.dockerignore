@@ -1,6 +1,31 @@
-__pycache__/
-*.py[cod]
-.env
+# Python bytecode (compiled files)
+
+\*_/**pycache**/
+_.py[cod]
+_$py.class
+_.pyc
+
+# Virtual environments (Do not copy local environments)
+
 venv/
-.git/
-*.pyc
+env/
+.venv/
+ENV/
+
+# Environment files (Security - sensitive data)
+
+.env
+
+# Jupyter Notebook checkpoints
+
+.ipynb_checkpoints
+
+# Git & Version Control
+
+.git
+.gitignore
+
+# OS generated files
+
+.DS_Store
+thumbs.db

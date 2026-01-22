@@ -1,22 +1,29 @@
-# Dependency directories (React)
+# Dependency directories
 node_modules/
-frontend/node_modules/
+**/node_modules/
 
 # Python Virtual Environments
 venv/
 .venv/
 env/
-PYTHON_ENV/
+**/venv/
+**/env/
+
+# Python cache (Crucial: yours didn't catch the subfolders earlier)
+**/__pycache__/
+*.pyc
+
+# Local Environment Secrets
+.env
+.env.local
+**/.env
+**/.env.local
 
 # Build and Distribution files
 build/
 dist/
-__pycache__/
-*.pyc
+**/build/
+**/dist/
 
-# Local Environment Secrets (Always ignore these!)
-.env
-.env.local
-
-# ML Models (If you want to ignore them due to size)
-# ml/*.joblib
+# OS specific files
+.DS_Store
