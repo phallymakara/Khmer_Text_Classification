@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;700&display=swap");
+
+:root {
+  font-family: "Kantumruy Pro", sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  @apply bg-slate-50 text-slate-900 antialiased;
+}

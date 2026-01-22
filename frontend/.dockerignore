@@ -1,0 +1,28 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Build output
+dist/
+build/
+.svelte-kit/
+.next/
+
+# Environment files (Security)
+.env
+.env.local
+.env.*.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git & Version Control
+.git
+.gitignore
+
+# Editor/OS files
+.vscode/
+.idea/
+.DS_Store
