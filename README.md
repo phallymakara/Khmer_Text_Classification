@@ -17,7 +17,7 @@ As a Data Science student, I built this to solve the challenge of automated news
 
 ## Key Features
 
-- **Modern UI:** Minimalist user interface built with **React** and **Tailwind CSS**.
+- **Modern UI:** user interface built with **React** and **Tailwind CSS**.
 - **AI Inference:** Real-time text classification using a Linear SVC model.
 - **Deep Insights:** Detailed confidence scores for the Top 3 predicted categories.
 - **Audit Trail:** Automatic logging of all classifications into a PostgreSQL database.
@@ -57,7 +57,7 @@ To run this project on your own computer, ensure you have **Docker Desktop** ins
 ### 1. Clone the repository
 
 ```bash
-git clone [https://github.com/yourusername/Khmer_Text_Classification.git](https://github.com/yourusername/Khmer_Text_Classification.git)
+git clone [https://github.com/phallymakara/Khmer_Text_Classification.git](https://github.com/phallymakara/Khmer_Text_Classification.git)
 cd Khmer_Text_Classification
 ```
 
@@ -96,3 +96,30 @@ docker-compose up --build
 ```bash
 API Docs (Swagger): http://localhost:8000/docs
 ```
+
+---
+
+## Model Management
+
+To keep the repository lightweight and comply with GitHub file size limitations, the trained machine learning model is not included in this repository.
+
+### How to Get the Model
+
+To obtain the trained model, please contact the author via Telegram:
+
+https://t.me/phallymakara
+
+### Model Setup
+
+To run the prediction engine, follow these steps:
+
+1. Obtain the model file named:
+   `best_model_compressed.joblib`
+
+2. Place the model file in the following directory:
+   `backend/ml/`
+
+3. Ensure the file name matches exactly:
+   `best_model_compressed.joblib`
+
+Once the model file is placed in the correct directory, the prediction engine will function correctly.
