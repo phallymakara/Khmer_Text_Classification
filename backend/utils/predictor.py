@@ -2,7 +2,7 @@ import joblib
 import os
 import numpy as np
 
-# Set the path to your model
+# Set the path to model
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, "ml", "best_model_compressed.joblib")
 
