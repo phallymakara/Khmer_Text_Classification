@@ -160,9 +160,51 @@ def get_history(limit: int = 10, db: Session = Depends(get_db)):
     except Exception as e:
         logging.error(f"History Access Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch history")
+    
+
+@app.post("/classify-bulk-stream")
+async def bulk_classify_stream(file: UploadFile = File(...)):
+    contents = await file.read()
+    
+    if file.filename.endswith('.csv'):
+        df = pd.read_csv(io.BytesIO(contents), encoding='utf-8')
+    else:
+        df = pd.read_excel(io.BytesIO(contents))
+
+    target_col = next((c for c in df.columns if c.lower() in ['text', 'content']), None)
+    total_rows = len(df)
+
+    async def event_generator():
+        processed_count = 0
+        for index, row in df.iterrows():
+            text_line = str(row[target_col]).strip()
+            
+            if text_line and text_line.lower() != 'nan':
+                # Run Inference
+                predictions = classify_text(text_line)
+                primary = predictions[0]
+                processed_count += 1
+                
+                # Create the data payload
+                data = {
+                    "current": processed_count,
+                    "total": total_rows,
+                    "prediction": {
+                        "id": index + 1,
+                        "preview": text_line[:100],
+                        "category": primary["category_name"]
+                    }
+                }
+                
+                # Yield the event in SSE format
+                yield f"data: {json.dumps(data)}\n\n"
+                
+                # Small sleep to ensure the event loop handles the stream smoothly
+                await asyncio.sleep(0.01)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @app.get("/health")
 def health_check():
     return {"status": "online", "version": "1.1.0"}
-

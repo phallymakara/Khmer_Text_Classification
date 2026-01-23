@@ -27,7 +27,7 @@ const Predictor = () => {
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [historyData, setHistoryData] = useState([]);
-
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
   const fileInputRef = useRef(null);
 
   const models = [
@@ -58,13 +58,64 @@ const Predictor = () => {
 
     setLoading(true);
     setError(null);
-    setResult(null);
+    setProgress({ current: 0, total: 0 });
+    setResult({
+      isBulk: true,
+      predictions: [],
+      filename: file.name,
+      processed_count: 0,
+    });
+
+    const formData = new FormData();
+    formData.append("file", file);
 
     try {
-      const data = await classifyBulk(file);
-      setResult({ isBulk: true, ...data });
+      // FIX: Pull the base URL from Vite environment variables
+      const baseUrl =
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+      const response = await fetch(`${baseUrl}/classify-bulk-stream`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Server communication failed");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = [];
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n\n");
+
+        lines.forEach((line) => {
+          if (line.startsWith("data: ")) {
+            try {
+              const eventData = JSON.parse(line.replace("data: ", ""));
+
+              setProgress({
+                current: eventData.current,
+                total: eventData.total,
+              });
+              accumulated = [eventData.prediction, ...accumulated];
+
+              setResult((prev) => ({
+                ...prev,
+                processed_count: eventData.current,
+                predictions: accumulated,
+              }));
+            } catch (e) {
+              console.error("Error parsing stream chunk", e);
+            }
+          }
+        });
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to process bulk file.");
+      setError("Connection to AI Engine failed. Please check your network.");
     } finally {
       setLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -215,7 +266,7 @@ const Predictor = () => {
                     onClick={handleAnalyze}
                     disabled={loading || !text.trim()}
                     className="bg-slate-900 hover:bg-blue-600 text-white px-10 py-3.5 rounded-[18px] text-base font-black tracking-widest uppercase flex items-center gap-4 transition-all disabled:bg-slate-200 active:scale-95">
-                    {loading ?
+                    {loading && progress.total === 0 ?
                       <RefreshCw className="animate-spin" size={18} />
                     : <Search size={18} />}{" "}
                     EXECUTE ANALYSIS
@@ -228,7 +279,37 @@ const Predictor = () => {
           {/* RESULTS AREA */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl h-full min-h-[480px] flex flex-col overflow-hidden relative">
-              {loading && (
+              {/* STICKY PROGRESS BAR (Shows only during Bulk Stream) */}
+              {loading && progress.total > 0 && (
+                <div className="absolute inset-x-0 top-0 z-20 bg-white/95 backdrop-blur-md p-8 border-b border-slate-100 animate-in slide-in-from-top duration-500">
+                  <div className="flex justify-between items-end mb-3">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">
+                        Neural Stream Active
+                      </span>
+                      <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                        Row {progress.current}{" "}
+                        <span className="text-slate-400 font-light text-sm">
+                          of {progress.total}
+                        </span>
+                      </h3>
+                    </div>
+                    <span className="text-lg font-mono font-black text-blue-600">
+                      {Math.round((progress.current / progress.total) * 100)}%
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 transition-all duration-300 ease-out shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+                      style={{
+                        width: `${(progress.current / progress.total) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {loading && progress.total === 0 && (
                 <div className="m-auto flex flex-col items-center gap-4 text-blue-500 font-bold text-[10px] tracking-widest uppercase text-center">
                   <LoadingSpinner />
                   <p>Neural Processing...</p>
@@ -252,12 +333,18 @@ const Predictor = () => {
               )}
 
               {result && (
-                <div className="p-10 animate-in fade-in slide-in-from-bottom-4 duration-700 h-full flex flex-col">
+                <div
+                  className={`p-10 animate-in fade-in slide-in-from-bottom-4 duration-700 h-full flex flex-col ${loading && progress.total > 0 ? "pt-36" : ""}`}>
                   {result.isBulk ?
                     /* --- BULK VIEW (LINE-BY-LINE) --- */
                     <>
                       <div className="flex items-center gap-2 text-green-600 mb-6 font-bold uppercase tracking-[0.3em] text-[8px]">
-                        <CheckCircle size={12} /> Batch Process Complete
+                        {loading ?
+                          <RefreshCw size={12} className="animate-spin" />
+                        : <CheckCircle size={12} />}
+                        {loading ?
+                          "Analyzing Stream..."
+                        : "Batch Process Complete"}
                       </div>
                       <div className="mb-6">
                         <span className="text-[8px] font-black text-slate-500 bg-slate-100 px-3 py-1 rounded-full uppercase mb-3 inline-block tracking-widest">
@@ -276,11 +363,11 @@ const Predictor = () => {
                         <span>Category</span>
                       </div>
 
-                      <div className="flex-grow overflow-y-auto pr-2 space-y-2 max-h-[400px]">
+                      <div className="flex-grow overflow-y-auto pr-2 space-y-2 max-h-[400px] custom-scrollbar">
                         {result.predictions.map((pred) => (
                           <div
                             key={pred.id}
-                            className="flex justify-between items-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 group hover:border-blue-300 transition-all">
+                            className="flex justify-between items-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 group hover:border-blue-300 transition-all animate-in fade-in slide-in-from-left-2">
                             <div className="flex items-center gap-3 overflow-hidden">
                               <span className="text-[9px] font-mono text-slate-300">
                                 #{String(pred.id).padStart(3, "0")}
@@ -296,24 +383,26 @@ const Predictor = () => {
                         ))}
                       </div>
 
-                      {/* EXPORT SECTION */}
-                      <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center">
-                        <div className="flex flex-col">
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                            Line-by-line Complete
-                          </p>
-                          <p className="text-[9px] text-slate-300 italic">
-                            Ready for local export
-                          </p>
-                        </div>
+                      {/* EXPORT SECTION (Visible only when done) */}
+                      {!loading && (
+                        <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center">
+                          <div className="flex flex-col">
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                              Line-by-line Complete
+                            </p>
+                            <p className="text-[9px] text-slate-300 italic">
+                              Ready for local export
+                            </p>
+                          </div>
 
-                        <button
-                          onClick={handleDownload}
-                          className="flex items-center gap-2 bg-green-50 text-green-600 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all active:scale-95 shadow-sm shadow-green-100">
-                          <Download size={14} />
-                          Download CSV
-                        </button>
-                      </div>
+                          <button
+                            onClick={handleDownload}
+                            className="flex items-center gap-2 bg-green-50 text-green-600 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all active:scale-95 shadow-sm shadow-green-100">
+                            <Download size={14} />
+                            Download CSV
+                          </button>
+                        </div>
+                      )}
                     </>
                   : /* --- SINGLE VIEW --- */
                     <>
