@@ -14,6 +14,8 @@ import {
   ChevronDown,
   Upload,
   CheckCircle,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 
 const Predictor = () => {
@@ -79,6 +81,48 @@ const Predictor = () => {
       }
     }
     setIsDrawerOpen(!isDrawerOpen);
+  };
+
+  // HANDLE DOWNLOAD AND EXPORT
+  const handleDownload = () => {
+    if (!result || !result.predictions) return;
+
+    const headers = [
+      "Line ID",
+      "Input Preview",
+      "Predicted Category",
+      "Confidence Score",
+    ];
+    // map the result to csv row
+    const csvRows = result.predictions.map((pred) => [
+      pred.id,
+      // We wrap text in quotes
+      `"${pred.preview.replace(/"/g, '""')}"`,
+      pred.category,
+      pred.confidence,
+    ]);
+
+    // 3. Combine headers and rows
+    const csvContent = [headers, ...csvRows].map((e) => e.join(",")).join("\n");
+
+    // 4. Create a Blob with a UTF-8 BOM (Byte Order Mark)
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    // 5. Create a temporary link and trigger download
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `results_${result.filename || "classification"}.csv`,
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -250,6 +294,25 @@ const Predictor = () => {
                             </span>
                           </div>
                         ))}
+                      </div>
+
+                      {/* EXPORT SECTION */}
+                      <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center">
+                        <div className="flex flex-col">
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                            Line-by-line Complete
+                          </p>
+                          <p className="text-[9px] text-slate-300 italic">
+                            Ready for local export
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={handleDownload}
+                          className="flex items-center gap-2 bg-green-50 text-green-600 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all active:scale-95 shadow-sm shadow-green-100">
+                          <Download size={14} />
+                          Download CSV
+                        </button>
                       </div>
                     </>
                   : /* --- SINGLE VIEW --- */

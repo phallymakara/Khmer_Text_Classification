@@ -1,9 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import pandas as pd
 import io
 import logging
+import json
+import asyncio
 
 # Internal imports based on your structure
 from database.base import wait_for_db
@@ -162,3 +165,4 @@ def get_history(limit: int = 10, db: Session = Depends(get_db)):
 @app.get("/health")
 def health_check():
     return {"status": "online", "version": "1.1.0"}
+
