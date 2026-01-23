@@ -7,7 +7,8 @@ import Predictor from "./pages/Predictor";
 function App() {
   return (
     <Router>
-      <div className="min-h-screen pt-16 bg-slate-50">
+      {/* FIX: Changed bg-slate-50 to bg-transparent */}
+      <div className="min-h-screen pt-16 bg-transparent">
         <Navbar />
         <main>
           <Routes>
@@ -15,7 +16,6 @@ function App() {
             <Route path="/test" element={<Predictor />} />
           </Routes>
         </main>
-        {/* Footer is removed from here */}
       </div>
     </Router>
   );
